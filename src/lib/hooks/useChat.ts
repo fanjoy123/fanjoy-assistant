@@ -11,7 +11,7 @@ interface Concept {
   description: string
 }
 
-interface UseChatReturn {
+export interface UseChatReturn {
   messages: Message[]
   input: string
   isLoading: boolean
@@ -24,7 +24,7 @@ export function useChat({ initialMessages = [] }: UseChatOptions = {}): UseChatR
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setInput(e.target.value)
   }
 
@@ -51,22 +51,18 @@ export function useChat({ initialMessages = [] }: UseChatOptions = {}): UseChatR
       })
 
       if (!response.ok) {
-        throw new Error('Failed to generate concepts')
+        throw new Error('Failed to get response')
       }
 
       const data = await response.json()
       
-      if (data.concepts) {
-        const conceptMessages: Message[] = data.concepts.map((concept: Concept) => ({
-          id: String(Date.now() + Math.random()),
-          role: 'assistant',
-          content: `${concept.title}\n${concept.productType}\n\n${concept.description}`
-        }))
-
-        setMessages(prev => [...prev, ...conceptMessages])
-      } else {
-        throw new Error('No concepts generated')
+      const assistantMessage: Message = {
+        id: String(Date.now() + 1),
+        role: 'assistant',
+        content: data.content || 'Sorry, I could not generate a response.'
       }
+
+      setMessages(prev => [...prev, assistantMessage])
     } catch (error) {
       console.error('Error in chat:', error)
       const errorMessage: Message = {
@@ -76,8 +72,8 @@ export function useChat({ initialMessages = [] }: UseChatOptions = {}): UseChatR
       }
       setMessages(prev => [...prev, errorMessage])
     } finally {
-      setIsLoading(false)
       setInput('')
+      setIsLoading(false)
     }
   }
 
