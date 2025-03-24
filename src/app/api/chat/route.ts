@@ -129,30 +129,67 @@ Remember:
       console.log("API: Extracted JSON string:", jsonString)
 
       const concepts = JSON.parse(jsonString)
-      console.log("API: Parsed concepts:", concepts)
+      console.log("✅ GPT Concepts:", concepts)
 
-      if (!Array.isArray(concepts) || concepts.length !== 4) {
-        console.error("API: Invalid concepts array:", concepts)
-        return NextResponse.json({ concepts: FALLBACK_CONCEPTS })
+      // Validate concepts before proceeding
+      if (!Array.isArray(concepts)) {
+        console.error("❌ Invalid concepts: not an array", concepts)
+        return NextResponse.json(
+          { error: "Invalid response format from AI" },
+          { status: 400 }
+        )
       }
 
-      // Generate images for each concept
-      console.log("API: Generating images for concepts...")
-      const imagePromises = concepts.map(concept => 
-        generateImage(concept.description)
+      if (concepts.length !== 4) {
+        console.error(`❌ Wrong number of concepts: ${concepts.length}`, concepts)
+        return NextResponse.json(
+          { error: "Invalid number of concepts generated" },
+          { status: 400 }
+        )
+      }
+
+      // Validate each concept has required fields
+      const invalidConcepts = concepts.filter(
+        c => !c.title || !c.description || typeof c.description !== 'string'
       )
+
+      if (invalidConcepts.length > 0) {
+        console.error("❌ Invalid concepts found:", invalidConcepts)
+        return NextResponse.json(
+          { error: "Some concepts are missing required fields" },
+          { status: 400 }
+        )
+      }
+
+      // Generate images for valid concepts
+      console.log("🎨 Generating images for concepts...")
+      const imagePromises = concepts.map(async (concept) => {
+        if (!concept.description) {
+          console.warn("⚠️ Skipping concept due to missing description", concept)
+          return "/placeholder.png"
+        }
+
+        try {
+          const imageUrl = await generateImage(concept.description)
+          return imageUrl
+        } catch (error) {
+          console.error("❌ Image generation failed for concept:", concept, error)
+          return "/placeholder.png"
+        }
+      })
       
       const images = await Promise.all(imagePromises)
-      console.log("API: All images generated")
+      console.log("✅ All images generated:", images)
 
       // Combine concepts with generated images
       const conceptsWithImages = concepts.map((concept, index) => ({
-        title: concept.title || "Untitled Design",
-        description: concept.description || "A unique t-shirt design",
-        image: images[index]
+        title: concept.title,
+        description: concept.description,
+        style: concept.style || style || "Modern",
+        image: images[index] || "/placeholder.png"
       }))
 
-      console.log("API: Returning concepts with images")
+      console.log("🔄 Final concepts:", conceptsWithImages)
       return NextResponse.json({ concepts: conceptsWithImages })
 
     } catch (openaiError) {
