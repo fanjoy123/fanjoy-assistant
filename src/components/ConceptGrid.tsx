@@ -90,6 +90,7 @@ export function ConceptGrid({ concepts }: ConceptGridProps) {
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-10">
       {validConcepts.map((concept, idx) => {
         console.log(`🧪 Concept ${idx + 1} image typeof:`, typeof concept.image)
+        const isPlaceholder = concept.image.startsWith('/')
         
         return (
           <div 
@@ -97,28 +98,35 @@ export function ConceptGrid({ concepts }: ConceptGridProps) {
             className="bg-white p-6 rounded-xl shadow hover:shadow-md transition-shadow"
           >
             <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
-              {typeof concept.image === 'string' && (
+              {!isPlaceholder && typeof concept.image === 'string' && concept.image.startsWith('http') ? (
                 <Image
-                  src={imageErrors[idx] ? "/placeholder.png" : concept.image}
+                  src={concept.image}
                   alt={concept.title || "Merchandise concept"}
-                  fill
+                  width={512}
+                  height={512}
                   className={`
-                    object-cover transition-all duration-300
+                    rounded-lg object-cover w-full h-full transition-all duration-300
                     ${loadedImages[idx] ? 'blur-0' : 'blur-sm'}
                   `}
                   onLoad={() => handleImageLoad(idx)}
                   onError={() => handleImageError(idx, concept)}
                   priority={idx < 2} // Load first two images immediately
                 />
+              ) : (
+                <img
+                  src="/placeholder.png"
+                  alt={concept.title || "Merchandise concept"}
+                  className="w-full h-full object-cover rounded-lg"
+                  onLoad={() => handleImageLoad(idx)}
+                  onError={(e) => {
+                    console.warn("❌ Placeholder image failed to load")
+                    e.currentTarget.src = "/placeholder.png"
+                  }}
+                />
               )}
               {!loadedImages[idx] && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-              {(imageErrors[idx] || typeof concept.image !== 'string') && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
-                  <p className="text-sm text-gray-500">Image unavailable</p>
                 </div>
               )}
             </div>
