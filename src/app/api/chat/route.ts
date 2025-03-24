@@ -1,8 +1,17 @@
 import { OpenAI } from 'openai'
 import { NextResponse } from 'next/server'
 
+// Log OpenAI key prefix to verify it's loaded
+const OPENAI_KEY = process.env.OPENAI_API_KEY
+console.log("🔑 OpenAI Key used:", OPENAI_KEY?.slice(0, 5))
+
+if (!OPENAI_KEY) {
+  console.error("❌ No OpenAI API key found in environment variables")
+  throw new Error("OpenAI API key is required")
+}
+
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: OPENAI_KEY
 })
 
 interface Concept {
@@ -44,10 +53,10 @@ async function generateImage(description: string): Promise<string> {
       return "/placeholder.png"
     }
 
-    const prompt = `Professional t-shirt design: ${description}. Create a realistic t-shirt mockup with the design clearly visible on a white background.`
+    const prompt = `T-shirt concept: ${description}. Create a realistic t-shirt mockup with the design clearly visible on a white background.`
     console.log("📝 Image generation prompt:", prompt)
 
-    const response = await openai.images.generate({
+    const imageResponse = await openai.images.generate({
       model: "dall-e-3",
       prompt,
       n: 1,
@@ -56,11 +65,17 @@ async function generateImage(description: string): Promise<string> {
       response_format: "url"
     })
 
-    console.log("🖼️ DALL·E response:", JSON.stringify(response, null, 2))
+    console.log("🔍 DALL·E response:", JSON.stringify(imageResponse, null, 2))
+    console.log("✅ Final image URL:", imageResponse?.data?.[0]?.url)
 
-    const imageUrl = response?.data?.[0]?.url
-    if (!imageUrl || !imageUrl.startsWith('https://')) {
-      console.error("❌ Invalid image URL returned:", imageUrl)
+    const imageUrl = imageResponse?.data?.[0]?.url
+    if (!imageUrl) {
+      console.error("❌ No image URL returned by DALL·E")
+      return "/placeholder.png"
+    }
+
+    if (!imageUrl.startsWith('https://')) {
+      console.error("❌ Invalid image URL format:", imageUrl)
       return "/placeholder.png"
     }
 
@@ -167,28 +182,45 @@ Remember:
 
       // Generate images for valid concepts
       console.log("🎨 Starting image generation for concepts...")
-      const imageResponses = await Promise.all(
+      const imageUrls = await Promise.all(
         validConcepts.map(async (concept, index) => {
           console.log(`🖼️ Generating image ${index + 1}/4:`, concept.description)
           try {
             const imageUrl = await generateImage(concept.description)
-            return { success: true, url: imageUrl }
+            if (!imageUrl.startsWith('http')) {
+              console.error(`❌ Invalid image URL for concept ${index + 1}:`, imageUrl)
+              return "/placeholder.png"
+            }
+            console.log(`✅ Generated valid image URL ${index + 1}:`, imageUrl)
+            return imageUrl
           } catch (error) {
             console.error(`❌ Image generation failed for concept ${index + 1}:`, error)
-            return { success: false, url: "/placeholder.png" }
+            return "/placeholder.png"
           }
         })
       )
 
-      console.log("🖼️ Image generation results:", JSON.stringify(imageResponses, null, 2))
+      console.log("🖼️ All image URLs:", JSON.stringify(imageUrls, null, 2))
 
       // Combine concepts with generated images
-      const conceptsWithImages = validConcepts.map((concept, index) => ({
-        title: concept.title.trim(),
-        description: concept.description.trim(),
-        style: concept.style || style || "Modern",
-        image: imageResponses[index]?.url || "/placeholder.png"
-      }))
+      const conceptsWithImages = validConcepts.map((concept, index) => {
+        const imageUrl = imageUrls[index]
+        console.log(`✅ Using image URL for concept ${index + 1}:`, imageUrl)
+        
+        return {
+          title: concept.title.trim(),
+          description: concept.description.trim(),
+          style: concept.style || style || "Modern",
+          image: imageUrl.startsWith('http') ? imageUrl : "/placeholder.png"
+        }
+      })
+
+      // Final validation
+      conceptsWithImages.forEach((c, index) => {
+        if (!c.image.startsWith('http')) {
+          console.warn(`❌ Invalid image URL for concept ${index + 1}:`, c.image)
+        }
+      })
 
       console.log("✨ Final concepts with images:", JSON.stringify(conceptsWithImages, null, 2))
       return NextResponse.json({ 
