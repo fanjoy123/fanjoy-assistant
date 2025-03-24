@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import Image from 'next/image'
 
+// Base64 encoded simple placeholder image
+const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIGZpbGw9IiNGM0Y0RjYiLz4KICA8cGF0aCBkPSJNMjI0IDI0MEgzMjBNMjI0IDI3MkgzMjAiIHN0cm9rZT0iIzlDQTNBRiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K'
+
 interface Concept {
   title: string
   description: string
@@ -90,7 +93,7 @@ export function ConceptGrid({ concepts }: ConceptGridProps) {
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-10">
       {validConcepts.map((concept, idx) => {
         console.log(`🧪 Concept ${idx + 1} image typeof:`, typeof concept.image)
-        const isPlaceholder = concept.image.startsWith('/')
+        const isPlaceholder = !concept.image.startsWith('http')
         
         return (
           <div 
@@ -98,7 +101,7 @@ export function ConceptGrid({ concepts }: ConceptGridProps) {
             className="bg-white p-6 rounded-xl shadow hover:shadow-md transition-shadow"
           >
             <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
-              {!isPlaceholder && typeof concept.image === 'string' && concept.image.startsWith('http') ? (
+              {!isPlaceholder && typeof concept.image === 'string' ? (
                 <Image
                   src={concept.image}
                   alt={concept.title || "Merchandise concept"}
@@ -114,13 +117,13 @@ export function ConceptGrid({ concepts }: ConceptGridProps) {
                 />
               ) : (
                 <img
-                  src="/placeholder.png"
+                  src={PLACEHOLDER_IMAGE}
                   alt={concept.title || "Merchandise concept"}
                   className="w-full h-full object-cover rounded-lg"
                   onLoad={() => handleImageLoad(idx)}
                   onError={(e) => {
                     console.warn("❌ Placeholder image failed to load")
-                    e.currentTarget.src = "/placeholder.png"
+                    e.currentTarget.src = PLACEHOLDER_IMAGE
                   }}
                 />
               )}
