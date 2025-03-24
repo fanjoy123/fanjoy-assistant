@@ -11,7 +11,7 @@ export function useChat({ initialMessages = [] }: UseChatOptions = {}) {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value)
   }
 

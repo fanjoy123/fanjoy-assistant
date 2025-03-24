@@ -19,14 +19,14 @@ export default function DesignAssistant() {
   })
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 font-sans">
       <Header />
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-3xl mx-auto">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
             className="text-center mb-12"
           >
             <div className="flex items-center justify-center gap-3 mb-4">
@@ -35,14 +35,15 @@ export default function DesignAssistant() {
               </h1>
               <span className="text-4xl animate-bounce">✨</span>
             </div>
-            <p className="text-xl text-gray-600 font-light">
+            <p className="text-base text-gray-600 font-light">
               Your personal design assistant is here to help
             </p>
           </motion.div>
 
-          <div className="relative">
+          <div className="relative mb-8 text-center">
+            <p className="text-sm font-medium text-gray-700 mb-2">Pick a vibe ✨</p>
             <select 
-              className="absolute right-4 -top-12 bg-white rounded-full px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 shadow-sm hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full max-w-[200px] mx-auto rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 shadow-sm hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black bg-white"
             >
               <option value="">Choose Style</option>
               <option value="minimal">Minimal</option>
