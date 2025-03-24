@@ -57,34 +57,24 @@ export default function Home() {
       
       if (!response.ok) {
         console.error('Home: API error:', data)
-        throw new Error(data.error || 'Failed to generate concepts. Please try again.')
+        throw new Error(data.error || 'Whoops, something broke. Try a different prompt or reload the page.')
       }
 
-      if (!data.concepts) {
-        console.error('Home: Missing concepts in response:', data)
-        throw new Error('Server returned an invalid response. Please try again.')
-      }
-
-      if (!Array.isArray(data.concepts)) {
-        console.error('Home: Concepts is not an array:', data)
-        throw new Error('Server returned an invalid response format. Please try again.')
+      if (!data.concepts || !Array.isArray(data.concepts)) {
+        console.error('Home: Invalid response format:', data)
+        throw new Error('Whoops, something broke. Try a different prompt or reload the page.')
       }
 
       if (data.concepts.length !== 4) {
         console.error('Home: Wrong number of concepts:', data.concepts.length)
-        throw new Error('Server returned an incorrect number of concepts. Please try again.')
+        throw new Error('Whoops, something broke. Try a different prompt or reload the page.')
       }
 
       // Validate each concept
       data.concepts.forEach((concept: Concept, index: number) => {
-        const missingFields = []
-        if (!concept.title) missingFields.push('title')
-        if (!concept.description) missingFields.push('description')
-        if (!concept.style) missingFields.push('style')
-        
-        if (missingFields.length > 0) {
+        if (!concept.title || !concept.description || !concept.image) {
           console.error(`Home: Invalid concept at index ${index}:`, concept)
-          throw new Error(`Server returned an invalid concept format. Please try again.`)
+          throw new Error('Whoops, something broke. Try a different prompt or reload the page.')
         }
       })
 
@@ -96,7 +86,7 @@ export default function Home() {
       setError(
         error instanceof Error 
           ? error.message 
-          : 'Something went wrong. Please try again.'
+          : 'Whoops, something broke. Try a different prompt or reload the page.'
       )
       setConcepts([])
     } finally {
