@@ -24,13 +24,13 @@ export function ChatInput({
         placeholder="Describe your merchandise design idea..."
         rows={1}
         disabled={isLoading}
-        className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 pr-20 text-base focus:border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-300 disabled:opacity-50 transition-all duration-200"
+        className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3.5 pr-20 text-base focus:border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-300 disabled:opacity-50 transition-all duration-200"
       />
       <motion.button
         whileTap={{ scale: 0.95 }}
         type="submit"
         disabled={isLoading}
-        className="absolute bottom-2.5 right-2.5 rounded-lg bg-black p-2 text-white transition-all duration-200 hover:bg-gray-800 disabled:opacity-50"
+        className="absolute bottom-2.5 right-2.5 rounded-lg bg-black p-2.5 text-white transition-all duration-200 hover:bg-gray-800 disabled:opacity-50 hover:shadow-sm"
       >
         {isLoading ? (
           <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
