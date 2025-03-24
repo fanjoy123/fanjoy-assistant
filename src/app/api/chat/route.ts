@@ -53,39 +53,48 @@ async function generateImage(description: string): Promise<string> {
       return "/placeholder.png"
     }
 
-    const prompt = `T-shirt concept: ${description}. Create a realistic t-shirt mockup with the design clearly visible on a white background.`
+    const prompt = description
     console.log("📝 Image generation prompt:", prompt)
 
-    const imageResponse = await openai.images.generate({
-      model: "dall-e-3",
-      prompt,
-      n: 1,
-      size: "1024x1024",
-      quality: "standard",
-      response_format: "url"
-    })
+    try {
+      console.log("🚀 Calling DALL·E API with prompt:", prompt)
+      const imageResponse = await openai.images.generate({
+        model: "dall-e-3",
+        prompt,
+        n: 1,
+        size: "1024x1024"
+      })
 
-    console.log("🔍 DALL·E response:", JSON.stringify(imageResponse, null, 2))
-    console.log("✅ Final image URL:", imageResponse?.data?.[0]?.url)
+      console.log("🧠 Full DALL·E response:", JSON.stringify(imageResponse, null, 2))
 
-    const imageUrl = imageResponse?.data?.[0]?.url
-    if (!imageUrl) {
-      console.error("❌ No image URL returned by DALL·E")
-      return "/placeholder.png"
+      if (!imageResponse?.data?.[0]?.url) {
+        console.error("❌ No image URL in DALL·E response:", imageResponse)
+        throw new Error("No image URL returned by DALL·E")
+      }
+
+      const imageUrl = imageResponse.data[0].url
+      console.log("✅ Image URL:", imageUrl)
+
+      if (!imageUrl || !imageUrl.startsWith("http")) {
+        console.error("❌ Invalid image URL returned:", imageUrl)
+        throw new Error("Invalid image URL format")
+      }
+
+      console.log("✅ Valid image URL generated:", imageUrl)
+      return imageUrl
+
+    } catch (apiError) {
+      console.error("❌ DALL·E API error:", apiError)
+      throw apiError
     }
-
-    if (!imageUrl.startsWith('https://')) {
-      console.error("❌ Invalid image URL format:", imageUrl)
-      return "/placeholder.png"
-    }
-
-    console.log("✅ Valid image URL generated:", imageUrl)
-    return imageUrl
 
   } catch (err) {
     const error = err as Error
-    console.error("❌ Image generation failed:", error.message)
-    console.error("Full error:", error)
+    console.error("❌ Image generation failed:", {
+      error: error.message,
+      stack: error.stack,
+      name: error.name
+    })
     return "/placeholder.png"
   }
 }
@@ -186,41 +195,56 @@ Remember:
         validConcepts.map(async (concept, index) => {
           console.log(`🖼️ Generating image ${index + 1}/4:`, concept.description)
           try {
-            const imageUrl = await generateImage(concept.description)
-            if (!imageUrl.startsWith('http')) {
-              console.error(`❌ Invalid image URL for concept ${index + 1}:`, imageUrl)
-              return "/placeholder.png"
+            const imageUrl = await generateImage(
+              `T-shirt design concept: ${concept.description}. Create a realistic t-shirt mockup with the design clearly visible on a white background.`
+            )
+            if (!imageUrl || !imageUrl.startsWith('http')) {
+              console.error(`❌ Invalid image URL for concept ${index + 1}:`, {
+                url: imageUrl,
+                concept: concept.title
+              })
+              throw new Error("Invalid image URL")
             }
             console.log(`✅ Generated valid image URL ${index + 1}:`, imageUrl)
             return imageUrl
           } catch (error) {
-            console.error(`❌ Image generation failed for concept ${index + 1}:`, error)
-            return "/placeholder.png"
+            console.error(`❌ Image generation failed for concept ${index + 1}:`, {
+              error: error instanceof Error ? error.message : error,
+              concept: concept.title
+            })
+            throw error // Let the error propagate to trigger fallback
           }
         })
-      )
+      ).catch(error => {
+        console.error("❌ Bulk image generation failed:", error)
+        return validConcepts.map(() => "/placeholder.png")
+      })
 
       console.log("🖼️ All image URLs:", JSON.stringify(imageUrls, null, 2))
 
       // Combine concepts with generated images
       const conceptsWithImages = validConcepts.map((concept, index) => {
         const imageUrl = imageUrls[index]
-        console.log(`✅ Using image URL for concept ${index + 1}:`, imageUrl)
+        console.log(`✅ Using image URL for concept ${index + 1}:`, {
+          url: imageUrl,
+          title: concept.title,
+          isValid: imageUrl && imageUrl.startsWith('http')
+        })
         
         return {
           title: concept.title.trim(),
           description: concept.description.trim(),
           style: concept.style || style || "Modern",
-          image: imageUrl.startsWith('http') ? imageUrl : "/placeholder.png"
+          image: imageUrl && imageUrl.startsWith('http') ? imageUrl : "/placeholder.png"
         }
       })
 
       // Final validation
-      conceptsWithImages.forEach((c, index) => {
-        if (!c.image.startsWith('http')) {
-          console.warn(`❌ Invalid image URL for concept ${index + 1}:`, c.image)
-        }
-      })
+      const hasValidImages = conceptsWithImages.some(c => c.image.startsWith('http'))
+      if (!hasValidImages) {
+        console.error("❌ No valid images generated for any concepts")
+        throw new Error("Failed to generate any valid images")
+      }
 
       console.log("✨ Final concepts with images:", JSON.stringify(conceptsWithImages, null, 2))
       return NextResponse.json({ 
@@ -230,7 +254,11 @@ Remember:
 
     } catch (err) {
       const openaiError = err as Error
-      console.error("❌ OpenAI API error:", openaiError)
+      console.error("❌ OpenAI API error:", {
+        message: openaiError.message,
+        stack: openaiError.stack,
+        name: openaiError.name
+      })
       return NextResponse.json(
         { 
           error: "Failed to generate concepts",
@@ -243,7 +271,11 @@ Remember:
 
   } catch (err) {
     const error = err as Error
-    console.error("❌ Request processing error:", error)
+    console.error("❌ Request processing error:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
     return NextResponse.json(
       { 
         error: "Failed to process request",
