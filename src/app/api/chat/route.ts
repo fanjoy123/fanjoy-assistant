@@ -34,6 +34,29 @@ const FALLBACK_CONCEPTS = [
   }
 ]
 
+async function generateImage(description: string): Promise<string> {
+  try {
+    console.log("API: Generating image for description:", description)
+    const response = await openai.images.generate({
+      model: "dall-e-3",
+      prompt: `Professional t-shirt design: ${description}. Make it look like a real t-shirt mockup with the design clearly visible.`,
+      n: 1,
+      size: "1024x1024",
+    })
+    
+    const imageUrl = response.data[0].url
+    if (!imageUrl) {
+      throw new Error("No image URL returned")
+    }
+
+    console.log("API: Image generated successfully")
+    return imageUrl
+  } catch (error) {
+    console.error("API: Image generation failed:", error)
+    return "/placeholder.png"
+  }
+}
+
 export async function POST(req: Request) {
   console.log("API: Handler started")
   
@@ -71,7 +94,8 @@ Remember:
 1. Return EXACTLY 4 concepts
 2. Keep descriptions visual and concise
 3. ONLY return the JSON array - no other text
-4. Use the requested style: ${style || 'any style'}`
+4. Use the requested style: ${style || 'any style'}
+5. Make descriptions detailed enough for image generation`
 
     console.log("API: Calling OpenAI...")
     
@@ -112,14 +136,24 @@ Remember:
         return NextResponse.json({ concepts: FALLBACK_CONCEPTS })
       }
 
-      // Validate and ensure each concept has required fields
-      const validatedConcepts = concepts.map(concept => ({
+      // Generate images for each concept
+      console.log("API: Generating images for concepts...")
+      const imagePromises = concepts.map(concept => 
+        generateImage(concept.description)
+      )
+      
+      const images = await Promise.all(imagePromises)
+      console.log("API: All images generated")
+
+      // Combine concepts with generated images
+      const conceptsWithImages = concepts.map((concept, index) => ({
         title: concept.title || "Untitled Design",
         description: concept.description || "A unique t-shirt design",
-        image: concept.image || "/placeholder.png"
+        image: images[index]
       }))
 
-      return NextResponse.json({ concepts: validatedConcepts })
+      console.log("API: Returning concepts with images")
+      return NextResponse.json({ concepts: conceptsWithImages })
 
     } catch (openaiError) {
       console.error("API: OpenAI call failed:", openaiError)
@@ -128,7 +162,7 @@ Remember:
           error: "Failed to generate concepts",
           concepts: FALLBACK_CONCEPTS
         },
-        { status: 200 } // Return 200 with fallback concepts instead of 500
+        { status: 200 }
       )
     }
 
@@ -139,7 +173,7 @@ Remember:
         error: "Failed to process request",
         concepts: FALLBACK_CONCEPTS
       },
-      { status: 200 } // Return 200 with fallback concepts instead of 500
+      { status: 200 }
     )
   }
 }
