@@ -24,16 +24,16 @@ export function ChatInput({
         placeholder="Describe your merchandise design idea..."
         rows={1}
         disabled={isLoading}
-        className="w-full resize-none rounded-2xl border border-gray-200 bg-white px-6 py-4 pr-24 text-base focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+        className="w-full resize-none rounded-2xl border border-gray-200 bg-white px-6 py-4 pr-24 text-base focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50 transition-all duration-200"
       />
       <motion.button
         whileTap={{ scale: 0.95 }}
         type="submit"
         disabled={isLoading}
-        className="absolute bottom-3 right-3 rounded-xl bg-blue-500 p-2 text-white transition-colors hover:bg-blue-600 disabled:opacity-50"
+        className="absolute bottom-3 right-3 rounded-xl bg-black p-2.5 text-white transition-all duration-200 hover:bg-gray-800 disabled:opacity-50 hover:shadow-md"
       >
         {isLoading ? (
-          <svg className="h-6 w-6 animate-spin" viewBox="0 0 24 24">
+          <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
             <path
               className="opacity-75"
@@ -42,7 +42,7 @@ export function ChatInput({
             />
           </svg>
         ) : (
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
           </svg>
         )}

@@ -17,7 +17,7 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
   }, [messages])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {messages.map((message, index) => (
         <motion.div
           key={message.id}
@@ -30,7 +30,7 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
           )}
         >
           {message.role === 'assistant' && (
-            <div className="flex-shrink-0 rounded-full bg-blue-500 p-2">
+            <div className="flex-shrink-0 rounded-full bg-black p-2">
               <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
               </svg>
@@ -38,16 +38,16 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
           )}
           <div
             className={cn(
-              'rounded-2xl px-6 py-4 text-sm max-w-[80%]',
+              'rounded-2xl px-6 py-4 text-base max-w-[85%] shadow-sm transition-all duration-200',
               message.role === 'assistant'
-                ? 'bg-gray-100 text-gray-900'
-                : 'bg-blue-500 text-white'
+                ? 'bg-gray-50 text-gray-900 hover:bg-gray-100'
+                : 'bg-black text-white hover:bg-gray-900'
             )}
           >
             {message.content}
           </div>
           {message.role === 'user' && (
-            <div className="flex-shrink-0 rounded-full bg-gray-300 p-2">
+            <div className="flex-shrink-0 rounded-full bg-gray-200 p-2">
               <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -58,4 +58,4 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
       <div ref={messagesEndRef} />
     </div>
   )
-} 
+}

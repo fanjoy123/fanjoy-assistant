@@ -1,9 +1,10 @@
 import React from 'react'
-import { Inter } from 'next/font/google'
+import { Inter, Outfit } from 'next/font/google'
 import './globals.css'
 import type { Metadata } from 'next'
 
 const inter = Inter({ subsets: ['latin'] })
+const outfit = Outfit({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Fanjoy Design Assistant',
@@ -18,7 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full bg-white antialiased`}>
-        {children}
+        <div className={outfit.className}>
+          {children}
+        </div>
       </body>
     </html>
   )

@@ -7,10 +7,14 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            {/* Replace with actual Fanjoy logo */}
-            <div className="text-2xl font-bold tracking-tight text-black">
-              Fanjoy
-            </div>
+            <Image
+              src="/fanjoy-logo.svg"
+              alt="Fanjoy"
+              width={120}
+              height={32}
+              className="h-8 w-auto"
+              priority
+            />
           </div>
         </div>
       </div>
