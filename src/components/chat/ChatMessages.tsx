@@ -17,7 +17,7 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
   }, [messages])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <AnimatePresence initial={false}>
         {messages.map((message, index) => (
           <motion.div
@@ -36,16 +36,16 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                className="flex-shrink-0 rounded-full bg-blue-500 p-2 shadow-lg"
+                className="flex-shrink-0 rounded-full bg-blue-500 p-1.5 shadow-sm"
               >
-                <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
               </motion.div>
             )}
             <div
               className={cn(
-                'relative rounded-2xl px-4 py-3 text-base shadow-sm',
+                'relative rounded-xl px-3 py-2 text-sm shadow-sm max-w-[80%]',
                 message.role === 'assistant'
                   ? 'bg-white border border-gray-100 text-gray-800'
                   : 'bg-blue-500 text-white'
@@ -63,7 +63,7 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: [0, 1, 0] }}
                   transition={{ duration: 1, repeat: Infinity }}
-                  className="absolute -bottom-6 left-4 text-xs text-gray-400"
+                  className="absolute -bottom-4 left-3 text-[10px] text-gray-400"
                 >
                   •••
                 </motion.div>
@@ -74,9 +74,9 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                className="flex-shrink-0 rounded-full bg-gray-100 p-2"
+                className="flex-shrink-0 rounded-full bg-gray-100 p-1.5"
               >
-                <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </motion.div>
