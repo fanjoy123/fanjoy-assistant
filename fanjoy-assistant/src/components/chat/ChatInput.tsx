@@ -6,19 +6,20 @@ import { motion } from 'framer-motion'
 
 interface ChatInputProps {
   input: string
-  handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
+  isLoading?: boolean
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   handleSubmit: (e: React.FormEvent) => void
 }
 
-export function ChatInput({ input, handleInputChange, handleSubmit }: ChatInputProps) {
+export function ChatInput({ input, isLoading, handleInputChange, handleSubmit }: ChatInputProps) {
   return (
     <form onSubmit={handleSubmit} className="relative">
-      <textarea
+      <input
+        type="text"
         value={input}
         onChange={handleInputChange}
         placeholder="Type your message..."
-        rows={1}
-        className="w-full resize-none rounded-lg border border-gray-200 bg-white p-4 pr-16 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full rounded-lg border border-gray-200 bg-white p-4 pr-16 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <motion.button
         whileTap={{ scale: 0.95 }}
