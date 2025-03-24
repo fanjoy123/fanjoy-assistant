@@ -8,7 +8,19 @@ import { ChatMessages } from '@/components/chat/ChatMessages'
 import { useChat } from '@/lib/hooks/useChat'
 
 export default function DesignAssistant() {
-  const { messages, input, isLoading, handleInputChange, handleSubmit } = useChat({
+  const { 
+    messages, 
+    input, 
+    isLoading, 
+    handleInputChange, 
+    handleSubmit 
+  }: {
+    messages: Message[]
+    input: string
+    isLoading: boolean
+    handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+    handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>
+  } = useChat({
     initialMessages: [
       {
         id: '1',
