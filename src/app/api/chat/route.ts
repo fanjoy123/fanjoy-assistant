@@ -16,7 +16,8 @@ interface Concept {
 
 export async function POST(req: Request) {
   try {
-    const { prompt } = await req.json()
+    const { prompt, style } = await req.json()
+    console.log('API: Received request:', { prompt, style }) // Debug log
 
     if (!prompt) {
       return NextResponse.json(
@@ -25,23 +26,39 @@ export async function POST(req: Request) {
       )
     }
 
+    const systemPrompt = style 
+      ? `You are a merchandise design expert. Generate 4 different design concepts based on the user's prompt, emphasizing a ${style} style.
+         Return a JSON object with a 'concepts' array containing exactly 4 objects with this structure:
+         {
+           "concepts": [
+             {
+               "title": "Catchy name for the design",
+               "description": "Brief, visual description of how it would look on merch",
+               "style": "${style}"
+             }
+           ]
+         }
+         Keep descriptions concise but visual. Focus on how it would look on actual merchandise.`
+      : `You are a merchandise design expert. Generate 4 different design concepts based on the user's prompt.
+         Return a JSON object with a 'concepts' array containing exactly 4 objects with this structure:
+         {
+           "concepts": [
+             {
+               "title": "Catchy name for the design",
+               "description": "Brief, visual description of how it would look on merch",
+               "style": "One of: Minimal, Bold, Vintage, or Modern"
+             }
+           ]
+         }
+         Keep descriptions concise but visual. Focus on how it would look on actual merchandise.`
+
+    console.log('API: Sending prompt to OpenAI') // Debug log
     const completion = await openai.chat.completions.create({
       model: "gpt-4-turbo-preview",
       messages: [
         {
           role: "system",
-          content: `You are a merchandise design expert. Generate 4 different design concepts based on the user's prompt.
-          Return a JSON object with a 'concepts' array containing exactly 4 objects with this structure:
-          {
-            "concepts": [
-              {
-                "title": "Catchy name for the design",
-                "description": "Brief, visual description of how it would look on merch",
-                "style": "One of: Minimal, Bold, Vintage, or Modern"
-              }
-            ]
-          }
-          Keep descriptions concise but visual. Focus on how it would look on actual merchandise.`
+          content: systemPrompt
         },
         {
           role: "user",
@@ -57,7 +74,7 @@ export async function POST(req: Request) {
       throw new Error('No response from OpenAI')
     }
 
-    console.log('OpenAI Response:', response) // Debug log
+    console.log('API: OpenAI Response:', response) // Debug log
 
     const parsedResponse = JSON.parse(response)
     if (!parsedResponse.concepts || !Array.isArray(parsedResponse.concepts)) {
@@ -69,11 +86,11 @@ export async function POST(req: Request) {
       image: '/placeholder.png' // Add placeholder image
     }))
 
-    console.log('Processed concepts:', concepts) // Debug log
+    console.log('API: Processed concepts:', concepts) // Debug log
 
     return NextResponse.json({ concepts })
   } catch (error) {
-    console.error('Error in chat API:', error)
+    console.error('API: Error:', error)
     return NextResponse.json(
       { 
         error: error instanceof Error ? error.message : "Failed to generate concepts. Please try again.",
