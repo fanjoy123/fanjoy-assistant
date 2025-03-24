@@ -47,7 +47,13 @@ export default function DesignAssistant() {
                   input={input}
                   isLoading={isLoading}
                   handleInputChange={handleInputChange}
-                  handleSubmit={handleSubmit}
+                  handleSubmit={async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+                    try {
+                      await handleSubmit(e)
+                    } catch (error) {
+                      console.error('Error submitting chat:', error)
+                    }
+                  }}
                 />
               </div>
             </div>
