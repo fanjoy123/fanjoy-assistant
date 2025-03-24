@@ -17,21 +17,21 @@ export function ChatInput({
   handleSubmit
 }: ChatInputProps) {
   return (
-    <form onSubmit={handleSubmit} className="max-w-xl mx-auto w-full">
-      <div className="flex items-center gap-2">
+    <form onSubmit={handleSubmit}>
+      <div className="flex items-center gap-3">
         <input
           type="text"
           value={input}
           onChange={handleInputChange}
-          placeholder="Tell me your merch idea... What's your vibe?"
+          placeholder="Tell me your merch idea..."
           disabled={isLoading}
-          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-base placeholder-gray-500 shadow-sm focus:border-black focus:bg-white focus:outline-none focus:ring-2 focus:ring-black/10 disabled:opacity-50 transition-all duration-200"
+          className="w-full rounded-xl border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-black placeholder-gray-500 bg-gray-50 hover:bg-white focus:bg-white transition-colors"
         />
         <motion.button
           whileTap={{ scale: 0.95 }}
           type="submit"
           disabled={isLoading || !input.trim()}
-          className="flex-shrink-0 rounded-xl bg-black px-4 py-3 text-white shadow-sm transition-all duration-200 hover:bg-gray-800 disabled:opacity-50 disabled:hover:bg-black"
+          className="bg-black text-white px-5 py-3 rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:hover:bg-black font-medium"
         >
           {isLoading ? (
             <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
@@ -43,10 +43,7 @@ export function ChatInput({
               />
             </svg>
           ) : (
-            <span className="flex items-center gap-2">
-              Send
-              <span className="text-lg">✈️</span>
-            </span>
+            "Submit"
           )}
         </motion.button>
       </div>

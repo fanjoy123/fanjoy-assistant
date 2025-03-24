@@ -17,70 +17,30 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
   }, [messages])
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 min-h-[200px] max-h-[400px] overflow-y-auto px-1">
       <AnimatePresence initial={false}>
-        {messages.map((message, index) => (
+        {messages.map((message) => (
           <motion.div
             key={message.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2, delay: index * 0.05 }}
+            transition={{ duration: 0.2 }}
             className={cn(
-              'flex w-full items-start gap-x-3',
+              'flex w-full items-start',
               message.role === 'assistant' ? 'justify-start' : 'justify-end'
             )}
           >
-            {message.role === 'assistant' && (
-              <motion.div 
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                className="flex-shrink-0 rounded-full bg-blue-500 p-1.5 shadow-sm"
-              >
-                <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                </svg>
-              </motion.div>
-            )}
             <div
               className={cn(
-                'relative rounded-xl px-3 py-2 text-sm shadow-sm max-w-[80%]',
+                'rounded-xl px-4 py-2 text-sm max-w-[85%] leading-relaxed',
                 message.role === 'assistant'
-                  ? 'bg-white border border-gray-100 text-gray-800'
-                  : 'bg-blue-500 text-white'
+                  ? 'bg-gray-50 text-gray-800'
+                  : 'bg-black text-white'
               )}
             >
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                {message.content}
-              </motion.div>
-              {message.role === 'assistant' && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: [0, 1, 0] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                  className="absolute -bottom-4 left-3 text-[10px] text-gray-400"
-                >
-                  •••
-                </motion.div>
-              )}
+              {message.content}
             </div>
-            {message.role === 'user' && (
-              <motion.div 
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                className="flex-shrink-0 rounded-full bg-gray-100 p-1.5"
-              >
-                <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </motion.div>
-            )}
           </motion.div>
         ))}
       </AnimatePresence>
