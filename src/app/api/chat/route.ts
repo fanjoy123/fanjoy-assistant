@@ -36,37 +36,54 @@ const FALLBACK_CONCEPTS = [
 
 async function generateImage(description: string): Promise<string> {
   try {
-    console.log("API: Generating image for description:", description)
-    const response = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: `Professional t-shirt design: ${description}. Make it look like a real t-shirt mockup with the design clearly visible.`,
-      n: 1,
-      size: "1024x1024",
-    })
+    console.log("🎨 Generating image for description:", description)
     
-    const imageUrl = response.data[0].url
-    if (!imageUrl) {
-      throw new Error("No image URL returned")
+    if (!description?.trim()) {
+      console.error("❌ Empty description provided for image generation")
+      return "/placeholder.png"
     }
 
-    console.log("API: Image generated successfully")
+    const prompt = `Professional t-shirt design: ${description}. Create a realistic t-shirt mockup with the design clearly visible on a white background.`
+    console.log("📝 Image generation prompt:", prompt)
+
+    const response = await openai.images.generate({
+      model: "dall-e-3",
+      prompt,
+      n: 1,
+      size: "1024x1024",
+      quality: "standard",
+      response_format: "url"
+    })
+
+    console.log("🖼️ DALL·E response:", JSON.stringify(response, null, 2))
+
+    const imageUrl = response?.data?.[0]?.url
+    if (!imageUrl || !imageUrl.startsWith('https://')) {
+      console.error("❌ Invalid image URL returned:", imageUrl)
+      return "/placeholder.png"
+    }
+
+    console.log("✅ Valid image URL generated:", imageUrl)
     return imageUrl
-  } catch (error) {
-    console.error("API: Image generation failed:", error)
+
+  } catch (err) {
+    const error = err as Error
+    console.error("❌ Image generation failed:", error.message)
+    console.error("Full error:", error)
     return "/placeholder.png"
   }
 }
 
 export async function POST(req: Request) {
-  console.log("API: Handler started")
+  console.log("🚀 API handler started")
   
   try {
     const body = await req.json()
-    console.log("API: Received body:", body)
+    console.log("📥 Received request body:", body)
 
     const { prompt, style } = body
     if (!prompt?.trim()) {
-      console.log("API: Empty prompt received")
+      console.log("❌ Empty prompt received")
       return NextResponse.json(
         { error: "Please provide a prompt" },
         { status: 400 }
@@ -110,10 +127,10 @@ Remember:
       })
 
       const raw = completion.choices[0]?.message?.content || ""
-      console.log("API: Raw OpenAI response:", raw)
+      console.log("📝 Raw GPT response:", raw)
 
       if (!raw) {
-        console.log("API: Empty response from OpenAI, using fallback")
+        console.error("❌ Empty response from GPT")
         return NextResponse.json({ concepts: FALLBACK_CONCEPTS })
       }
 
@@ -121,94 +138,89 @@ Remember:
       const jsonEnd = raw.lastIndexOf("]")
       
       if (jsonStart === -1 || jsonEnd === -1) {
-        console.error("API: No JSON array found in response:", raw)
+        console.error("❌ No JSON array found in response:", raw)
         return NextResponse.json({ concepts: FALLBACK_CONCEPTS })
       }
 
       const jsonString = raw.substring(jsonStart, jsonEnd + 1)
-      console.log("API: Extracted JSON string:", jsonString)
+      console.log("📦 Extracted JSON string:", jsonString)
 
       const concepts = JSON.parse(jsonString)
-      console.log("✅ GPT Concepts:", concepts)
+      console.log("✅ Parsed concepts:", concepts)
 
-      // Validate concepts before proceeding
-      if (!Array.isArray(concepts)) {
-        console.error("❌ Invalid concepts: not an array", concepts)
+      if (!Array.isArray(concepts) || concepts.length !== 4) {
+        console.error("❌ Invalid concepts array:", concepts)
         return NextResponse.json(
-          { error: "Invalid response format from AI" },
+          { error: "Invalid concepts generated" },
           { status: 400 }
         )
       }
 
-      if (concepts.length !== 4) {
-        console.error(`❌ Wrong number of concepts: ${concepts.length}`, concepts)
-        return NextResponse.json(
-          { error: "Invalid number of concepts generated" },
-          { status: 400 }
-        )
-      }
-
-      // Validate each concept has required fields
-      const invalidConcepts = concepts.filter(
-        c => !c.title || !c.description || typeof c.description !== 'string'
+      // Validate each concept
+      const validConcepts = concepts.filter(c => 
+        c && typeof c === 'object' && c.title?.trim() && c.description?.trim()
       )
 
-      if (invalidConcepts.length > 0) {
-        console.error("❌ Invalid concepts found:", invalidConcepts)
+      if (validConcepts.length !== 4) {
+        console.error("❌ Some concepts are invalid:", concepts)
         return NextResponse.json(
-          { error: "Some concepts are missing required fields" },
+          { error: "Invalid concept format" },
           { status: 400 }
         )
       }
 
       // Generate images for valid concepts
-      console.log("🎨 Generating images for concepts...")
-      const imagePromises = concepts.map(async (concept) => {
-        if (!concept.description) {
-          console.warn("⚠️ Skipping concept due to missing description", concept)
-          return "/placeholder.png"
-        }
+      console.log("🎨 Starting image generation for concepts...")
+      const imageResults = await Promise.all(
+        validConcepts.map(async (concept, index) => {
+          console.log(`🖼️ Generating image ${index + 1}/4:`, concept.description)
+          try {
+            const imageUrl = await generateImage(concept.description)
+            return { success: true, url: imageUrl }
+          } catch (error) {
+            console.error(`❌ Image generation failed for concept ${index + 1}:`, error)
+            return { success: false, url: "/placeholder.png" }
+          }
+        })
+      )
 
-        try {
-          const imageUrl = await generateImage(concept.description)
-          return imageUrl
-        } catch (error) {
-          console.error("❌ Image generation failed for concept:", concept, error)
-          return "/placeholder.png"
-        }
-      })
-      
-      const images = await Promise.all(imagePromises)
-      console.log("✅ All images generated:", images)
+      console.log("🖼️ Image generation results:", imageResults)
 
       // Combine concepts with generated images
-      const conceptsWithImages = concepts.map((concept, index) => ({
-        title: concept.title,
-        description: concept.description,
+      const conceptsWithImages = validConcepts.map((concept, index) => ({
+        title: concept.title.trim(),
+        description: concept.description.trim(),
         style: concept.style || style || "Modern",
-        image: images[index] || "/placeholder.png"
+        image: imageResults[index]?.url || "/placeholder.png"
       }))
 
-      console.log("🔄 Final concepts:", conceptsWithImages)
-      return NextResponse.json({ concepts: conceptsWithImages })
+      console.log("✨ Final concepts with images:", conceptsWithImages)
+      return NextResponse.json({ 
+        concepts: conceptsWithImages,
+        status: "success"
+      })
 
-    } catch (openaiError) {
-      console.error("API: OpenAI call failed:", openaiError)
+    } catch (err) {
+      const openaiError = err as Error
+      console.error("❌ OpenAI API error:", openaiError)
       return NextResponse.json(
         { 
           error: "Failed to generate concepts",
-          concepts: FALLBACK_CONCEPTS
+          concepts: FALLBACK_CONCEPTS,
+          details: openaiError.message
         },
         { status: 200 }
       )
     }
 
-  } catch (error) {
-    console.error("API: Request processing failed:", error)
+  } catch (err) {
+    const error = err as Error
+    console.error("❌ Request processing error:", error)
     return NextResponse.json(
       { 
         error: "Failed to process request",
-        concepts: FALLBACK_CONCEPTS
+        concepts: FALLBACK_CONCEPTS,
+        details: error.message
       },
       { status: 200 }
     )
