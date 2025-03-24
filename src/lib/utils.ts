@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 
 // Initialize OpenAI client
 export const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY,
   dangerouslyAllowBrowser: true // Note: In production, you should use server-side API calls
 })
 
