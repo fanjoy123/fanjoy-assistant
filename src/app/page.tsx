@@ -6,28 +6,21 @@ import { ConceptGrid } from '@/components/ConceptGrid'
 
 interface Concept {
   title: string
+  productType: string
   description: string
-  image: string
-  style: string
 }
 
 export default function Home() {
-  const [input, setInput] = useState('')
-  const [selectedStyle, setSelectedStyle] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [concepts, setConcepts] = useState<Concept[]>([])
   const [error, setError] = useState('')
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value)
-  }
+  const [selectedStyle, setSelectedStyle] = useState('')
 
   const handleStyleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedStyle(e.target.value)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (input: string) => {
     console.log('Home: handleSubmit called')
 
     if (!input.trim() || isLoading) {
@@ -65,14 +58,9 @@ export default function Home() {
         throw new Error('Whoops, something broke. Try a different prompt or reload the page.')
       }
 
-      if (data.concepts.length !== 4) {
-        console.error('Home: Wrong number of concepts:', data.concepts.length)
-        throw new Error('Whoops, something broke. Try a different prompt or reload the page.')
-      }
-
       // Validate each concept
       data.concepts.forEach((concept: Concept, index: number) => {
-        if (!concept.title || !concept.description || !concept.image) {
+        if (!concept.title || !concept.productType || !concept.description) {
           console.error(`Home: Invalid concept at index ${index}:`, concept)
           throw new Error('Whoops, something broke. Try a different prompt or reload the page.')
         }
@@ -80,7 +68,6 @@ export default function Home() {
 
       console.log('Home: Setting concepts:', data.concepts)
       setConcepts(data.concepts)
-      setInput('')
     } catch (error) {
       console.error('Home: Error:', error)
       setError(
@@ -119,19 +106,15 @@ export default function Home() {
           </div>
           
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <ChatInput 
-                input={input}
-                isLoading={isLoading}
-                handleInputChange={handleInputChange}
-                handleSubmit={handleSubmit}
-              />
-              {error && (
-                <div className="mt-4 p-4 bg-red-50 rounded-lg border border-red-100">
-                  <p className="text-red-600 text-sm">{error}</p>
-                </div>
-              )}
-            </form>
+            <ChatInput 
+              onSubmit={handleSubmit}
+              isLoading={isLoading}
+            />
+            {error && (
+              <div className="mt-4 p-4 bg-red-50 rounded-lg border border-red-100">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
           </div>
 
           {isLoading && (
