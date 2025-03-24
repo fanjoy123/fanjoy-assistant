@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { type Message } from 'ai'
@@ -31,8 +33,8 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
             className={cn(
               'rounded-lg px-4 py-2 text-sm',
               message.role === 'assistant'
-                ? 'bg-muted text-muted-foreground'
-                : 'bg-primary text-primary-foreground'
+                ? 'bg-gray-100 text-gray-900'
+                : 'bg-blue-500 text-white'
             )}
           >
             {message.content}
