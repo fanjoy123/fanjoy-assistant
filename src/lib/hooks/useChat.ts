@@ -28,7 +28,7 @@ export function useChat({ initialMessages = [] }: UseChatOptions = {}): UseChatR
     setInput(e.target.value)
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
     if (!input.trim() || isLoading) return
 
