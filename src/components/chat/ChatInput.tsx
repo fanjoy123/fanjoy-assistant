@@ -1,33 +1,23 @@
 'use client'
 
-import { useState, FormEvent, ChangeEvent } from 'react'
+import React from 'react'
 import { motion } from 'framer-motion'
 
-interface ChatInputProps {
-  onSubmit: (input: string) => void
-  isLoading?: boolean
-}
+type ChatInputProps = {
+  input: string;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  isLoading?: boolean;
+};
 
-export function ChatInput({ onSubmit, isLoading = false }: ChatInputProps) {
-  const [input, setInput] = useState('')
-
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    if (!input.trim() || isLoading) return
-    onSubmit(input)
-  }
-
-  const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value)
-  }
-
+export function ChatInput({ input, handleInputChange, handleSubmit, isLoading = false }: ChatInputProps) {
   return (
     <div className="w-full max-w-3xl mx-auto">
       <form onSubmit={handleSubmit} className="w-full">
         <div className="flex flex-col gap-3">
-          <textarea
+          <input
+            type="text"
             className="w-full p-4 text-gray-900 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            rows={4}
             placeholder="Describe your content, vibe, or audience..."
             value={input}
             onChange={handleInputChange}

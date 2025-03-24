@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { type Message } from 'ai'
 
 interface UseChatOptions {
@@ -13,9 +13,15 @@ interface Concept {
 
 export function useChat({ initialMessages = [] }: UseChatOptions = {}) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
+  const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (input: string) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value)
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     if (!input.trim() || isLoading) return
 
     const userMessage: Message = {
@@ -63,12 +69,15 @@ export function useChat({ initialMessages = [] }: UseChatOptions = {}) {
       setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
+      setInput('')
     }
   }
 
   return {
     messages,
+    input,
     isLoading,
-    onSubmit: handleSubmit
+    handleInputChange,
+    handleSubmit
   }
 } 
