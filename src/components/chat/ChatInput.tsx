@@ -8,7 +8,7 @@ interface ChatInputProps {
   isLoading?: boolean
 }
 
-export default function ChatInput({ onSubmit, isLoading = false }: ChatInputProps) {
+export function ChatInput({ onSubmit, isLoading = false }: ChatInputProps) {
   const [input, setInput] = useState('')
 
   const handleSubmit = (e: FormEvent) => {
