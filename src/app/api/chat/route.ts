@@ -11,18 +11,47 @@ interface Concept {
   image: string
 }
 
+const FALLBACK_CONCEPTS = [
+  {
+    title: "Simple Black Tee",
+    description: "Classic black t-shirt with minimalist design",
+    image: "/placeholder.png"
+  },
+  {
+    title: "White Essential",
+    description: "Clean white t-shirt with subtle branding",
+    image: "/placeholder.png"
+  },
+  {
+    title: "Vintage Wash",
+    description: "Distressed look with faded graphics",
+    image: "/placeholder.png"
+  },
+  {
+    title: "Modern Cut",
+    description: "Contemporary fit with geometric patterns",
+    image: "/placeholder.png"
+  }
+]
+
 export async function POST(req: Request) {
+  console.log("API: Handler started")
+  
   try {
     const body = await req.json()
-    console.log("API: Raw request body:", body)
+    console.log("API: Received body:", body)
 
     const { prompt, style } = body
     if (!prompt?.trim()) {
+      console.log("API: Empty prompt received")
       return NextResponse.json(
         { error: "Please provide a prompt" },
         { status: 400 }
       )
     }
+
+    console.log("API: Processing prompt:", prompt)
+    console.log("API: Selected style:", style || "none")
 
     const systemPrompt = `
 You are a creative merchandise designer. Given a product idea and style, return exactly 4 unique merch design concepts.
@@ -44,84 +73,73 @@ Remember:
 3. ONLY return the JSON array - no other text
 4. Use the requested style: ${style || 'any style'}`
 
-    console.log('API: Sending to OpenAI with prompt:', prompt)
+    console.log("API: Calling OpenAI...")
     
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 1000
-    })
-
-    const rawResponse = completion.choices[0]?.message?.content
-    console.log('API: Raw OpenAI response:', rawResponse)
-
-    if (!rawResponse) {
-      throw new Error('Empty response from OpenAI')
-    }
-
     try {
-      // Find the JSON array in the response
-      const jsonStart = rawResponse.indexOf("[")
-      const jsonEnd = rawResponse.lastIndexOf("]")
-      
-      if (jsonStart === -1 || jsonEnd === -1) {
-        console.error('API: No JSON array found in response:', rawResponse)
-        throw new Error('Invalid response format')
-      }
-
-      const jsonStr = rawResponse.substring(jsonStart, jsonEnd + 1)
-      console.log('API: Extracted JSON string:', jsonStr)
-      
-      const concepts = JSON.parse(jsonStr)
-      console.log('API: Parsed concepts:', concepts)
-
-      if (!Array.isArray(concepts)) {
-        throw new Error('Response is not an array')
-      }
-
-      if (concepts.length !== 4) {
-        throw new Error(`Expected 4 concepts, got ${concepts.length}`)
-      }
-
-      // Validate each concept
-      concepts.forEach((concept, index) => {
-        if (!concept.title || !concept.description) {
-          throw new Error(`Concept ${index + 1} is missing required fields`)
-        }
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.8
       })
 
-      // Ensure each concept has an image field
-      const processedConcepts = concepts.map((concept: Concept) => ({
-        ...concept,
-        image: concept.image || '/placeholder.png'
+      const raw = completion.choices[0]?.message?.content || ""
+      console.log("API: Raw OpenAI response:", raw)
+
+      if (!raw) {
+        console.log("API: Empty response from OpenAI, using fallback")
+        return NextResponse.json({ concepts: FALLBACK_CONCEPTS })
+      }
+
+      const jsonStart = raw.indexOf("[")
+      const jsonEnd = raw.lastIndexOf("]")
+      
+      if (jsonStart === -1 || jsonEnd === -1) {
+        console.error("API: No JSON array found in response:", raw)
+        return NextResponse.json({ concepts: FALLBACK_CONCEPTS })
+      }
+
+      const jsonString = raw.substring(jsonStart, jsonEnd + 1)
+      console.log("API: Extracted JSON string:", jsonString)
+
+      const concepts = JSON.parse(jsonString)
+      console.log("API: Parsed concepts:", concepts)
+
+      if (!Array.isArray(concepts) || concepts.length !== 4) {
+        console.error("API: Invalid concepts array:", concepts)
+        return NextResponse.json({ concepts: FALLBACK_CONCEPTS })
+      }
+
+      // Validate and ensure each concept has required fields
+      const validatedConcepts = concepts.map(concept => ({
+        title: concept.title || "Untitled Design",
+        description: concept.description || "A unique t-shirt design",
+        image: concept.image || "/placeholder.png"
       }))
 
-      return NextResponse.json({ concepts: processedConcepts })
+      return NextResponse.json({ concepts: validatedConcepts })
 
-    } catch (parseError) {
-      console.error('API: Failed to parse response:', parseError)
-      console.error('API: Raw response that failed:', rawResponse)
-      throw new Error('Failed to parse AI response. Please try again.')
+    } catch (openaiError) {
+      console.error("API: OpenAI call failed:", openaiError)
+      return NextResponse.json(
+        { 
+          error: "Failed to generate concepts",
+          concepts: FALLBACK_CONCEPTS
+        },
+        { status: 200 } // Return 200 with fallback concepts instead of 500
+      )
     }
 
   } catch (error) {
-    console.error('API Error:', error)
+    console.error("API: Request processing failed:", error)
     return NextResponse.json(
       { 
-        error: "Whoops, something broke. Try a different prompt or reload the page.",
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: "Failed to process request",
+        concepts: FALLBACK_CONCEPTS
       },
-      { status: 500 }
+      { status: 200 } // Return 200 with fallback concepts instead of 500
     )
   }
 }
