@@ -31,14 +31,16 @@ export async function POST(req: Request) {
         {
           role: "system",
           content: `You are a merchandise design expert. Generate 4 different design concepts based on the user's prompt.
-          Return ONLY a JSON array of 4 objects with this exact structure:
-          [
-            {
-              "title": "Catchy name for the design",
-              "description": "Brief, visual description of how it would look on merch",
-              "style": "One of: Minimal, Bold, Vintage, or Modern"
-            }
-          ]
+          Return a JSON object with a 'concepts' array containing exactly 4 objects with this structure:
+          {
+            "concepts": [
+              {
+                "title": "Catchy name for the design",
+                "description": "Brief, visual description of how it would look on merch",
+                "style": "One of: Minimal, Bold, Vintage, or Modern"
+              }
+            ]
+          }
           Keep descriptions concise but visual. Focus on how it would look on actual merchandise.`
         },
         {
@@ -55,17 +57,28 @@ export async function POST(req: Request) {
       throw new Error('No response from OpenAI')
     }
 
+    console.log('OpenAI Response:', response) // Debug log
+
     const parsedResponse = JSON.parse(response)
+    if (!parsedResponse.concepts || !Array.isArray(parsedResponse.concepts)) {
+      throw new Error('Invalid response format from OpenAI')
+    }
+
     const concepts: Concept[] = parsedResponse.concepts.map((concept: any) => ({
       ...concept,
       image: '/placeholder.png' // Add placeholder image
     }))
 
+    console.log('Processed concepts:', concepts) // Debug log
+
     return NextResponse.json({ concepts })
   } catch (error) {
     console.error('Error in chat API:', error)
     return NextResponse.json(
-      { error: "Failed to generate concepts. Please try again." },
+      { 
+        error: error instanceof Error ? error.message : "Failed to generate concepts. Please try again.",
+        details: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     )
   }

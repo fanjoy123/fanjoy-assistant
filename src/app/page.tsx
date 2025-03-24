@@ -27,8 +27,11 @@ export default function Home() {
 
     setIsLoading(true)
     setError('')
+    setConcepts([]) // Clear previous concepts
 
     try {
+      console.log('Submitting prompt:', input.trim())
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -38,16 +41,23 @@ export default function Home() {
       })
 
       const data = await response.json()
+      console.log('API Response:', data)
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to generate concepts')
       }
 
+      if (!data.concepts || !Array.isArray(data.concepts)) {
+        throw new Error('Invalid response format: missing concepts array')
+      }
+
+      console.log('Setting concepts:', data.concepts)
       setConcepts(data.concepts)
       setInput('')
     } catch (error) {
       console.error('Error:', error)
       setError(error instanceof Error ? error.message : 'Failed to generate concepts')
+      setConcepts([]) // Clear concepts on error
     } finally {
       setIsLoading(false)
     }
@@ -85,7 +95,9 @@ export default function Home() {
                 handleSubmit={handleSubmit}
               />
               {error && (
-                <p className="text-red-500 text-sm">{error}</p>
+                <div className="mt-4 p-4 bg-red-50 rounded-lg border border-red-100">
+                  <p className="text-red-600 text-sm">{error}</p>
+                </div>
               )}
             </form>
           </div>
@@ -97,7 +109,11 @@ export default function Home() {
             </div>
           )}
 
-          {concepts.length > 0 && <ConceptGrid concepts={concepts} />}
+          {concepts && concepts.length > 0 && (
+            <div className="animate-fadeIn">
+              <ConceptGrid concepts={concepts} />
+            </div>
+          )}
         </div>
       </div>
     </div>
