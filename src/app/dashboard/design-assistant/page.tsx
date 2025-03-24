@@ -1,15 +1,9 @@
 'use client'
 
-import { Metadata } from 'next'
 import { useState } from 'react'
 import { type Message } from 'ai'
 import { ChatInput } from '@/components/chat/ChatInput'
 import { ChatMessages } from '@/components/chat/ChatMessages'
-
-export const metadata: Metadata = {
-  title: 'Design Assistant - Fanjoy',
-  description: 'Create stunning merchandise designs with AI assistance',
-}
 
 export default function DesignAssistant() {
   const [messages, setMessages] = useState<Message[]>([
