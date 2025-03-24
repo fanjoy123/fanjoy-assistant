@@ -6,8 +6,14 @@ import { ChatInput } from './ChatInput'
 import { ChatMessages } from './ChatMessages'
 import { useChat } from '@/lib/hooks/useChat'
 
+interface ChatInputProps {
+  input: string
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  handleSubmit: (e: React.FormEvent) => void
+}
+
 export function ChatInterface() {
-  const { messages, input, handleInputChange, handleSubmit } = useChat({
+  const { messages, input, isLoading, handleInputChange, handleSubmit } = useChat({
     initialMessages: [
       {
         id: 'welcome-message',
@@ -25,6 +31,7 @@ export function ChatInterface() {
       <div className="relative">
         <ChatInput 
           input={input}
+          isLoading={isLoading}
           handleInputChange={handleInputChange}
           handleSubmit={handleSubmit}
         />
