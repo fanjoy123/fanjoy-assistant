@@ -8,7 +8,7 @@ import { useChat } from '@/lib/hooks/useChat'
 import { motion } from 'framer-motion'
 
 export default function DesignAssistant() {
-  const { messages, input, isLoading, handleInputChange, handleSubmit } = useChat({
+  const { messages, isLoading, onSubmit } = useChat({
     initialMessages: [
       {
         id: '1',
@@ -61,14 +61,12 @@ export default function DesignAssistant() {
           >
             <div className="h-[600px] sm:h-[700px] flex flex-col">
               <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
-                <ChatMessages messages={messages} />
+                <ChatMessages messages={messages} isLoading={isLoading} />
               </div>
               <div className="border-t border-gray-100 p-4 sm:p-6 bg-white/80 backdrop-blur-lg">
                 <ChatInput
-                  input={input}
+                  onSubmit={onSubmit}
                   isLoading={isLoading}
-                  handleInputChange={handleInputChange}
-                  handleSubmit={handleSubmit}
                 />
               </div>
             </div>

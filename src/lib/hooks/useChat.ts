@@ -1,28 +1,21 @@
 import { useState } from 'react'
 import { type Message } from 'ai'
-import { generateAIResponse } from '@/lib/utils'
 
 interface UseChatOptions {
   initialMessages?: Message[]
 }
 
 interface Concept {
-  id: string
-  style: string
-  content: string
+  title: string
+  productType: string
+  description: string
 }
 
 export function useChat({ initialMessages = [] }: UseChatOptions = {}) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
-  const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value)
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (input: string) => {
     if (!input.trim() || isLoading) return
 
     const userMessage: Message = {
@@ -32,7 +25,6 @@ export function useChat({ initialMessages = [] }: UseChatOptions = {}) {
     }
 
     setMessages(prev => [...prev, userMessage])
-    setInput('')
     setIsLoading(true)
 
     try {
@@ -52,9 +44,9 @@ export function useChat({ initialMessages = [] }: UseChatOptions = {}) {
       
       if (data.concepts) {
         const conceptMessages: Message[] = data.concepts.map((concept: Concept) => ({
-          id: concept.id,
+          id: String(Date.now() + Math.random()),
           role: 'assistant',
-          content: `${concept.style} Concept:\n\n${concept.content}`
+          content: `${concept.title}\n${concept.productType}\n\n${concept.description}`
         }))
 
         setMessages(prev => [...prev, ...conceptMessages])
@@ -76,9 +68,7 @@ export function useChat({ initialMessages = [] }: UseChatOptions = {}) {
 
   return {
     messages,
-    input,
     isLoading,
-    handleInputChange,
-    handleSubmit
+    onSubmit: handleSubmit
   }
 } 
