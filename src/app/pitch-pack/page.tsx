@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, FormEvent } from 'react'
 import { motion } from 'framer-motion'
 
 interface PitchConcept {
@@ -23,8 +23,7 @@ export default function PitchPackGenerator() {
   const [concepts, setConcepts] = useState<PitchConcept[]>([])
   const [error, setError] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault()
+  const generatePitchPack = async () => {
     if (!prompt.trim() || isLoading) return
 
     setIsLoading(true)
@@ -52,6 +51,11 @@ export default function PitchPackGenerator() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    await generatePitchPack()
   }
 
   return (
