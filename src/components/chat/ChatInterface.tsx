@@ -6,12 +6,6 @@ import { ChatInput } from './ChatInput'
 import { ChatMessages } from './ChatMessages'
 import { useChat } from '@/lib/hooks/useChat'
 
-interface ChatInputProps {
-  input: string
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  handleSubmit: (e: React.FormEvent) => void
-}
-
 export function ChatInterface() {
   const { messages, input, isLoading, handleInputChange, handleSubmit } = useChat({
     initialMessages: [
