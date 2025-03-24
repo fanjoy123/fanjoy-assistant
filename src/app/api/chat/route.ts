@@ -31,21 +31,30 @@ export async function POST(req: Request) {
     }
 
     const systemPrompt = `You are a merchandise design expert. Generate exactly 4 design concepts.
-    RESPOND ONLY WITH THIS EXACT JSON STRUCTURE:
+    You MUST respond with a JSON object containing EXACTLY 4 concepts in this format:
     {
       "concepts": [
         {
-          "title": "Catchy name for the design",
-          "description": "Brief visual description of how it looks on merch",
-          "style": "${style || 'Pick from: Minimal, Bold, Vintage, Modern'}"
+          "title": "Short catchy name",
+          "description": "Brief visual description under 100 chars",
+          "style": "${style || 'Minimal'}"
         }
       ]
     }
 
-    Example concept: ${JSON.stringify(EXAMPLE_CONCEPT)}
+    Here's an example of ONE concept (you must provide 4):
+    {
+      "concepts": [
+        ${JSON.stringify(EXAMPLE_CONCEPT, null, 2)}
+      ]
+    }
     
-    Keep descriptions visual and concise. Focus on how it would look on actual merchandise.
-    DO NOT include any other text or explanation - ONLY the JSON response.`
+    Rules:
+    1. Generate EXACTLY 4 concepts
+    2. Each concept MUST have title, description, and style
+    3. Keep descriptions visual and under 100 characters
+    4. ONLY return the JSON - no other text
+    5. Ensure the JSON is valid and properly formatted`
 
     console.log('API: Sending to OpenAI with prompt:', prompt)
     
@@ -62,14 +71,16 @@ export async function POST(req: Request) {
         }
       ],
       temperature: 0.7,
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
+      max_tokens: 1000
     })
 
     const rawResponse = completion.choices[0]?.message?.content
     console.log('API: Raw OpenAI response:', rawResponse)
 
     if (!rawResponse) {
-      throw new Error('Empty response from OpenAI')
+      console.error('API: Empty response from OpenAI')
+      throw new Error('OpenAI returned an empty response')
     }
 
     let parsedResponse
@@ -78,25 +89,41 @@ export async function POST(req: Request) {
       console.log('API: Parsed response:', parsedResponse)
     } catch (parseError) {
       console.error('API: JSON parse error:', parseError)
-      console.log('API: Failed to parse response:', rawResponse)
-      throw new Error('Failed to parse OpenAI response')
+      console.error('API: Raw response that failed to parse:', rawResponse)
+      throw new Error('Failed to parse OpenAI response as JSON')
     }
 
-    if (!parsedResponse?.concepts || !Array.isArray(parsedResponse.concepts)) {
-      console.error('API: Invalid response format:', parsedResponse)
-      throw new Error('Invalid response format: missing concepts array')
+    // Validate response structure
+    if (!parsedResponse || typeof parsedResponse !== 'object') {
+      console.error('API: Response is not an object:', parsedResponse)
+      throw new Error('Invalid response: not a JSON object')
+    }
+
+    if (!parsedResponse.concepts) {
+      console.error('API: Missing concepts array:', parsedResponse)
+      throw new Error('Invalid response: missing concepts array')
+    }
+
+    if (!Array.isArray(parsedResponse.concepts)) {
+      console.error('API: Concepts is not an array:', parsedResponse.concepts)
+      throw new Error('Invalid response: concepts is not an array')
     }
 
     if (parsedResponse.concepts.length !== 4) {
       console.error('API: Wrong number of concepts:', parsedResponse.concepts.length)
-      throw new Error('Invalid response: expected 4 concepts')
+      throw new Error(`Invalid response: expected 4 concepts, got ${parsedResponse.concepts.length}`)
     }
 
     // Validate each concept
     parsedResponse.concepts.forEach((concept: any, index: number) => {
-      if (!concept.title || !concept.description || !concept.style) {
-        console.error('API: Invalid concept format at index', index, concept)
-        throw new Error(`Invalid concept format at position ${index + 1}`)
+      const missingFields = []
+      if (!concept.title) missingFields.push('title')
+      if (!concept.description) missingFields.push('description')
+      if (!concept.style) missingFields.push('style')
+      
+      if (missingFields.length > 0) {
+        console.error(`API: Invalid concept at index ${index}:`, concept)
+        throw new Error(`Concept ${index + 1} is missing required fields: ${missingFields.join(', ')}`)
       }
     })
 

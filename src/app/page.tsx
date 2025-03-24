@@ -32,6 +32,7 @@ export default function Home() {
 
     if (!input.trim() || isLoading) {
       console.log('Home: Submission blocked - empty input or loading')
+      setError('Please enter a prompt first')
       return
     }
 
@@ -55,19 +56,35 @@ export default function Home() {
       console.log('Home: API Response:', data)
       
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate concepts')
+        console.error('Home: API error:', data)
+        throw new Error(data.error || 'Failed to generate concepts. Please try again.')
       }
 
-      if (!data.concepts || !Array.isArray(data.concepts) || data.concepts.length !== 4) {
-        console.error('Home: Invalid concepts format:', data)
-        throw new Error('Invalid response format: expected array of 4 concepts')
+      if (!data.concepts) {
+        console.error('Home: Missing concepts in response:', data)
+        throw new Error('Server returned an invalid response. Please try again.')
+      }
+
+      if (!Array.isArray(data.concepts)) {
+        console.error('Home: Concepts is not an array:', data)
+        throw new Error('Server returned an invalid response format. Please try again.')
+      }
+
+      if (data.concepts.length !== 4) {
+        console.error('Home: Wrong number of concepts:', data.concepts.length)
+        throw new Error('Server returned an incorrect number of concepts. Please try again.')
       }
 
       // Validate each concept
       data.concepts.forEach((concept: Concept, index: number) => {
-        if (!concept.title || !concept.description || !concept.style) {
-          console.error('Home: Invalid concept at index', index, concept)
-          throw new Error(`Invalid concept format at position ${index + 1}`)
+        const missingFields = []
+        if (!concept.title) missingFields.push('title')
+        if (!concept.description) missingFields.push('description')
+        if (!concept.style) missingFields.push('style')
+        
+        if (missingFields.length > 0) {
+          console.error(`Home: Invalid concept at index ${index}:`, concept)
+          throw new Error(`Server returned an invalid concept format. Please try again.`)
         }
       })
 
@@ -76,7 +93,11 @@ export default function Home() {
       setInput('')
     } catch (error) {
       console.error('Home: Error:', error)
-      setError(error instanceof Error ? error.message : 'Failed to generate concepts')
+      setError(
+        error instanceof Error 
+          ? error.message 
+          : 'Something went wrong. Please try again.'
+      )
       setConcepts([])
     } finally {
       setIsLoading(false)
@@ -100,10 +121,10 @@ export default function Home() {
               className="rounded-lg border px-4 py-2 shadow-sm text-sm bg-white hover:border-gray-300 focus:border-black focus:ring-2 focus:ring-black/5 transition-colors"
             >
               <option value="">Choose Style (Optional)</option>
-              <option value="minimal">Minimal</option>
-              <option value="bold">Bold</option>
-              <option value="vintage">Vintage</option>
-              <option value="modern">Modern</option>
+              <option value="Minimal">Minimal</option>
+              <option value="Bold">Bold</option>
+              <option value="Vintage">Vintage</option>
+              <option value="Modern">Modern</option>
             </select>
           </div>
           
