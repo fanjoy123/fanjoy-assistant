@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 type ChatInputProps = {
   input: string;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
   isLoading?: boolean;
 };
 

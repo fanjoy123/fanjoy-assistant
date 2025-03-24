@@ -11,7 +11,15 @@ interface Concept {
   description: string
 }
 
-export function useChat({ initialMessages = [] }: UseChatOptions = {}) {
+interface UseChatReturn {
+  messages: Message[]
+  input: string
+  isLoading: boolean
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>
+}
+
+export function useChat({ initialMessages = [] }: UseChatOptions = {}): UseChatReturn {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
