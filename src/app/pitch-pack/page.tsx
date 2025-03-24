@@ -23,7 +23,7 @@ export default function PitchPackGenerator() {
   const [concepts, setConcepts] = useState<PitchConcept[]>([])
   const [error, setError] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
     if (!prompt.trim() || isLoading) return
 
