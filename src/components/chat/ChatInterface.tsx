@@ -10,6 +10,7 @@ export function ChatInterface() {
   const { messages, input, handleInputChange, handleSubmit } = useChat({
     initialMessages: [
       {
+        id: 'welcome-message',
         role: 'assistant',
         content: "Hi! I'm your AI design assistant. I'll help you create stunning merchandise designs. What kind of design would you like to create today?"
       }
