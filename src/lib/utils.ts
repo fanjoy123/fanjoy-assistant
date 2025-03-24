@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Helper function to generate AI response
-export async function generateAIResponse(prompt: string) {
+export async function generateAIResponse(prompt: string): Promise<string> {
   try {
     const response = await fetch('/api/chat', {
       method: 'POST',
@@ -24,6 +24,6 @@ export async function generateAIResponse(prompt: string) {
     return data.content
   } catch (error) {
     console.error('Error generating AI response:', error)
-    return "I apologize, but I encountered an error while processing your request. Please try again."
+    throw error
   }
 } 
