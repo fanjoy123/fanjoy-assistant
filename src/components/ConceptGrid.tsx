@@ -19,6 +19,7 @@ export function ConceptGrid({ concepts }: ConceptGridProps) {
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({})
 
   const handleImageLoad = (index: number) => {
+    console.log(`✅ Image ${index + 1} loaded successfully`)
     setLoadedImages(prev => ({
       ...prev,
       [index]: true
@@ -30,10 +31,12 @@ export function ConceptGrid({ concepts }: ConceptGridProps) {
   }
 
   const handleImageError = (index: number, concept: Concept) => {
-    console.warn("⚠️ Image failed to load:", {
+    console.warn("❌ Image failed to load:", {
+      index: index + 1,
       concept,
       imageUrl: concept.image,
-      isString: typeof concept.image === 'string'
+      isString: typeof concept.image === 'string',
+      imageType: typeof concept.image
     })
     setImageErrors(prev => ({
       ...prev,
@@ -64,7 +67,10 @@ export function ConceptGrid({ concepts }: ConceptGridProps) {
     }
 
     if (typeof concept.image !== 'string') {
-      console.warn("⚠️ ConceptGrid: Image is not a string:", concept.image)
+      console.warn("⚠️ ConceptGrid: Image is not a string:", {
+        image: concept.image,
+        type: typeof concept.image
+      })
       return false
     }
 
@@ -82,54 +88,60 @@ export function ConceptGrid({ concepts }: ConceptGridProps) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-10">
-      {validConcepts.map((concept, idx) => (
-        <div 
-          key={`${concept.title}-${idx}`}
-          className="bg-white p-6 rounded-xl shadow hover:shadow-md transition-shadow"
-        >
-          <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
-            <Image
-              src={imageErrors[idx] ? "/placeholder.png" : concept.image}
-              alt={concept.title || "Merchandise concept"}
-              fill
-              className={`
-                object-cover transition-all duration-300
-                ${loadedImages[idx] ? 'blur-0' : 'blur-sm'}
-              `}
-              onLoad={() => handleImageLoad(idx)}
-              onError={() => handleImageError(idx, concept)}
-              priority={idx < 2} // Load first two images immediately
-            />
-            {!loadedImages[idx] && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
-              </div>
-            )}
-            {imageErrors[idx] && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
-                <p className="text-sm text-gray-500">Image unavailable</p>
-              </div>
-            )}
+      {validConcepts.map((concept, idx) => {
+        console.log(`🧪 Concept ${idx + 1} image typeof:`, typeof concept.image)
+        
+        return (
+          <div 
+            key={`${concept.title}-${idx}`}
+            className="bg-white p-6 rounded-xl shadow hover:shadow-md transition-shadow"
+          >
+            <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
+              {typeof concept.image === 'string' && (
+                <Image
+                  src={imageErrors[idx] ? "/placeholder.png" : concept.image}
+                  alt={concept.title || "Merchandise concept"}
+                  fill
+                  className={`
+                    object-cover transition-all duration-300
+                    ${loadedImages[idx] ? 'blur-0' : 'blur-sm'}
+                  `}
+                  onLoad={() => handleImageLoad(idx)}
+                  onError={() => handleImageError(idx, concept)}
+                  priority={idx < 2} // Load first two images immediately
+                />
+              )}
+              {!loadedImages[idx] && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+              {(imageErrors[idx] || typeof concept.image !== 'string') && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+                  <p className="text-sm text-gray-500">Image unavailable</p>
+                </div>
+              )}
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mt-4">{concept.title}</h3>
+            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{concept.description}</p>
+            <div className="mt-3 flex items-center justify-between">
+              <button 
+                className="text-blue-500 text-sm hover:underline disabled:opacity-50 disabled:hover:no-underline"
+                disabled={imageErrors[idx]}
+                onClick={() => {
+                  // TODO: Implement regenerate/refine functionality
+                  console.log("Regenerate/refine clicked for concept:", concept)
+                }}
+              >
+                {imageErrors[idx] ? 'Regenerate' : 'Refine'}
+              </button>
+              {concept.style && (
+                <span className="text-xs text-gray-500">{concept.style}</span>
+              )}
+            </div>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mt-4">{concept.title}</h3>
-          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{concept.description}</p>
-          <div className="mt-3 flex items-center justify-between">
-            <button 
-              className="text-blue-500 text-sm hover:underline disabled:opacity-50 disabled:hover:no-underline"
-              disabled={imageErrors[idx]}
-              onClick={() => {
-                // TODO: Implement regenerate/refine functionality
-                console.log("Regenerate/refine clicked for concept:", concept)
-              }}
-            >
-              {imageErrors[idx] ? 'Regenerate' : 'Refine'}
-            </button>
-            {concept.style && (
-              <span className="text-xs text-gray-500">{concept.style}</span>
-            )}
-          </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 } 
