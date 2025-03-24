@@ -1,158 +1,62 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
-
-// Base64 encoded simple placeholder image
-const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIGZpbGw9IiNGM0Y0RjYiLz4KICA8cGF0aCBkPSJNMjI0IDI0MEgzMjBNMjI0IDI3MkgzMjAiIHN0cm9rZT0iIzlDQTNBRiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K'
 
 interface Concept {
   title: string
+  productType: string
   description: string
-  image: string
-  style?: string
 }
 
 interface ConceptGridProps {
   concepts: Concept[]
+  isLoading?: boolean
 }
 
-export function ConceptGrid({ concepts }: ConceptGridProps) {
-  const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({})
-  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({})
-
-  const handleImageLoad = (index: number) => {
-    console.log(`✅ Image ${index + 1} loaded successfully`)
-    setLoadedImages(prev => ({
-      ...prev,
-      [index]: true
-    }))
-    setImageErrors(prev => ({
-      ...prev,
-      [index]: false
-    }))
-  }
-
-  const handleImageError = (index: number, concept: Concept) => {
-    console.warn("❌ Image failed to load:", {
-      index: index + 1,
-      concept,
-      imageUrl: concept.image,
-      isString: typeof concept.image === 'string',
-      imageType: typeof concept.image
-    })
-    setImageErrors(prev => ({
-      ...prev,
-      [index]: true
-    }))
-    setLoadedImages(prev => ({
-      ...prev,
-      [index]: true // Stop showing loading state
-    }))
-  }
-
-  // Validate concepts array
-  if (!Array.isArray(concepts)) {
-    console.error("❌ ConceptGrid: concepts is not an array", concepts)
-    return null
-  }
-
-  // Filter out invalid concepts
-  const validConcepts = concepts.filter(concept => {
-    if (!concept || typeof concept !== 'object') {
-      console.warn("⚠️ ConceptGrid: Invalid concept object", concept)
-      return false
-    }
-    
-    if (!concept.title || !concept.description) {
-      console.warn("⚠️ ConceptGrid: Concept missing required fields", concept)
-      return false
-    }
-
-    if (typeof concept.image !== 'string') {
-      console.warn("⚠️ ConceptGrid: Image is not a string:", {
-        image: concept.image,
-        type: typeof concept.image
-      })
-      return false
-    }
-
-    return true
-  })
-
-  if (validConcepts.length === 0) {
-    console.error("❌ ConceptGrid: No valid concepts to display")
+export default function ConceptGrid({ concepts = [], isLoading = false }: ConceptGridProps) {
+  if (isLoading) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">No valid concepts to display. Please try again.</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="animate-pulse">
+            <div className="bg-gray-200 h-48 rounded-lg"></div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (!Array.isArray(concepts) || concepts.length === 0) {
+    return (
+      <div className="text-center text-gray-500">
+        No concepts generated yet. Try describing your content or vibe!
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-10">
-      {validConcepts.map((concept, idx) => {
-        console.log(`🧪 Concept ${idx + 1} image typeof:`, typeof concept.image)
-        const isPlaceholder = !concept.image.startsWith('http')
-        
-        return (
-          <div 
-            key={`${concept.title}-${idx}`}
-            className="bg-white p-6 rounded-xl shadow hover:shadow-md transition-shadow"
-          >
-            <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
-              {!isPlaceholder && typeof concept.image === 'string' ? (
-                <Image
-                  src={concept.image}
-                  alt={concept.title || "Merchandise concept"}
-                  width={512}
-                  height={512}
-                  className={`
-                    rounded-lg object-cover w-full h-full transition-all duration-300
-                    ${loadedImages[idx] ? 'blur-0' : 'blur-sm'}
-                  `}
-                  onLoad={() => handleImageLoad(idx)}
-                  onError={() => handleImageError(idx, concept)}
-                  priority={idx < 2} // Load first two images immediately
-                />
-              ) : (
-                <img
-                  src={PLACEHOLDER_IMAGE}
-                  alt={concept.title || "Merchandise concept"}
-                  className="w-full h-full object-cover rounded-lg"
-                  onLoad={() => handleImageLoad(idx)}
-                  onError={(e) => {
-                    console.warn("❌ Placeholder image failed to load")
-                    e.currentTarget.src = PLACEHOLDER_IMAGE
-                  }}
-                />
-              )}
-              {!loadedImages[idx] && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mt-4">{concept.title}</h3>
-            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{concept.description}</p>
-            <div className="mt-3 flex items-center justify-between">
-              <button 
-                className="text-blue-500 text-sm hover:underline disabled:opacity-50 disabled:hover:no-underline"
-                disabled={imageErrors[idx]}
-                onClick={() => {
-                  // TODO: Implement regenerate/refine functionality
-                  console.log("Regenerate/refine clicked for concept:", concept)
-                }}
-              >
-                {imageErrors[idx] ? 'Regenerate' : 'Refine'}
-              </button>
-              {concept.style && (
-                <span className="text-xs text-gray-500">{concept.style}</span>
-              )}
-            </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
+      {concepts.map((concept, index) => (
+        <div
+          key={index}
+          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+        >
+          <h2 className="text-xl font-bold text-gray-900">{concept.title}</h2>
+          <p className="text-sm text-gray-600 mt-1">{concept.productType}</p>
+          <p className="text-base mt-3 text-gray-700">{concept.description}</p>
+          <div className="mt-4 flex gap-2">
+            <button 
+              className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1"
+              onClick={() => navigator.clipboard.writeText(JSON.stringify(concept, null, 2))}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+              </svg>
+              Copy
+            </button>
           </div>
-        )
-      })}
+        </div>
+      ))}
     </div>
   )
 } 

@@ -16,33 +16,29 @@ const openai = new OpenAI({
 
 interface Concept {
   title: string
+  productType: string
   description: string
-  image: string
-  style?: string
 }
 
-const FALLBACK_CONCEPTS = [
+const systemPrompt = `
+You are a merch strategist for creators. Based on a short description of the creator's vibe, audience, or content, generate a creative pitch pack with 3-5 unique merch ideas.
+
+For each concept, return:
+- Title (a catchy product name)
+- Product Type (e.g. crewneck, trucker hat, journal)
+- Description (1-2 sentences max explaining the idea)
+
+Format the response in JSON like this:
+[
   {
-    title: "Simple Black Tee",
-    description: "Classic black t-shirt with minimalist design",
-    image: "/placeholder.png"
+    "title": "Midnight Rodeo Club",
+    "productType": "Oversized Tee",
+    "description": "Washed black t-shirt with bold western text and star graphics. Great for fans of coastal cowgirl and country aesthetics."
   },
-  {
-    title: "White Essential",
-    description: "Clean white t-shirt with subtle branding",
-    image: "/placeholder.png"
-  },
-  {
-    title: "Vintage Wash",
-    description: "Distressed look with faded graphics",
-    image: "/placeholder.png"
-  },
-  {
-    title: "Modern Cut",
-    description: "Contemporary fit with geometric patterns",
-    image: "/placeholder.png"
-  }
+  ...
 ]
+Make sure each idea is creative, merch-ready, and aligned with creator culture and Gen Z aesthetics.
+`;
 
 async function generateImage(description: string): Promise<string> {
   try {
@@ -100,189 +96,64 @@ async function generateImage(description: string): Promise<string> {
 }
 
 export async function POST(req: Request) {
-  console.log("🚀 API handler started")
-  
   try {
-    const body = await req.json()
-    console.log("📥 Received request body:", body)
+    const { prompt } = await req.json();
 
-    const { prompt, style } = body
-    if (!prompt?.trim()) {
-      console.log("❌ Empty prompt received")
-      return NextResponse.json(
-        { error: "Please provide a prompt" },
-        { status: 400 }
-      )
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
-    const systemPrompt = `
-You are a creative merchandise designer. Given a product idea and style, return exactly 4 unique merch design concepts.
+    console.log('Generating concepts for prompt:', prompt);
 
-🚫 Do NOT explain or describe anything outside of the JSON.
-✅ Respond ONLY in raw JSON like this:
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.7,
+    });
 
-[
-  {
-    "title": "Hearts & Honey",
-    "description": "A soft pink tee with hand-drawn hearts around the neckline and cursive 'love yourself' text.",
-    "image": "/placeholder.png"
-  }
-]
+    const response = completion.choices[0]?.message?.content;
+    
+    if (!response) {
+      console.error('No response from OpenAI');
+      return NextResponse.json({ error: 'Failed to generate concepts' }, { status: 500 });
+    }
 
-Remember:
-1. Return EXACTLY 4 concepts
-2. Keep descriptions visual and concise
-3. ONLY return the JSON array - no other text
-4. Use the requested style: ${style || 'any style'}
-5. Make descriptions detailed enough for image generation`
+    console.log('Raw OpenAI response:', response);
 
+    let concepts: Concept[];
     try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.8
-      })
-
-      const raw = completion.choices[0]?.message?.content || ""
-      console.log("📝 Raw GPT response:", raw)
-
-      if (!raw) {
-        console.error("❌ Empty response from GPT")
-        return NextResponse.json({ concepts: FALLBACK_CONCEPTS })
-      }
-
-      const jsonStart = raw.indexOf("[")
-      const jsonEnd = raw.lastIndexOf("]")
+      concepts = JSON.parse(response);
       
-      if (jsonStart === -1 || jsonEnd === -1) {
-        console.error("❌ No JSON array found in response:", raw)
-        return NextResponse.json({ concepts: FALLBACK_CONCEPTS })
+      if (!Array.isArray(concepts)) {
+        throw new Error('Response is not an array');
       }
 
-      const jsonString = raw.substring(jsonStart, jsonEnd + 1)
-      console.log("📦 Extracted JSON string:", jsonString)
-
-      const concepts = JSON.parse(jsonString)
-      console.log("✅ Parsed concepts:", concepts)
-
-      if (!Array.isArray(concepts) || concepts.length !== 4) {
-        console.error("❌ Invalid concepts array:", concepts)
-        return NextResponse.json(
-          { error: "Invalid concepts generated" },
-          { status: 400 }
-        )
-      }
-
-      // Validate each concept
-      const validConcepts = concepts.filter(c => 
-        c && typeof c === 'object' && c.title?.trim() && c.description?.trim()
-      )
-
-      if (validConcepts.length !== 4) {
-        console.error("❌ Some concepts are invalid:", concepts)
-        return NextResponse.json(
-          { error: "Invalid concept format" },
-          { status: 400 }
-        )
-      }
-
-      // Generate images for valid concepts
-      console.log("🎨 Starting image generation for concepts...")
-      const imageUrls = await Promise.all(
-        validConcepts.map(async (concept, index) => {
-          console.log(`🖼️ Generating image ${index + 1}/4:`, concept.description)
-          try {
-            const imageUrl = await generateImage(
-              `T-shirt design concept: ${concept.description}. Create a realistic t-shirt mockup with the design clearly visible on a white background.`
-            )
-            if (!imageUrl || !imageUrl.startsWith('http')) {
-              console.error(`❌ Invalid image URL for concept ${index + 1}:`, {
-                url: imageUrl,
-                concept: concept.title
-              })
-              throw new Error("Invalid image URL")
-            }
-            console.log(`✅ Generated valid image URL ${index + 1}:`, imageUrl)
-            return imageUrl
-          } catch (error) {
-            console.error(`❌ Image generation failed for concept ${index + 1}:`, {
-              error: error instanceof Error ? error.message : error,
-              concept: concept.title
-            })
-            throw error // Let the error propagate to trigger fallback
-          }
-        })
-      ).catch(error => {
-        console.error("❌ Bulk image generation failed:", error)
-        return validConcepts.map(() => "/placeholder.png")
-      })
-
-      console.log("🖼️ All image URLs:", JSON.stringify(imageUrls, null, 2))
-
-      // Combine concepts with generated images
-      const conceptsWithImages = validConcepts.map((concept, index) => {
-        const imageUrl = imageUrls[index]
-        console.log(`✅ Using image URL for concept ${index + 1}:`, {
-          url: imageUrl,
-          title: concept.title,
-          isValid: imageUrl && imageUrl.startsWith('http')
-        })
-        
-        return {
-          title: concept.title.trim(),
-          description: concept.description.trim(),
-          style: concept.style || style || "Modern",
-          image: imageUrl && imageUrl.startsWith('http') ? imageUrl : "/placeholder.png"
+      // Validate each concept has required fields
+      concepts = concepts.filter(concept => {
+        const isValid = concept.title && concept.productType && concept.description;
+        if (!isValid) {
+          console.warn('Invalid concept found:', concept);
         }
-      })
+        return isValid;
+      });
 
-      // Final validation
-      const hasValidImages = conceptsWithImages.some(c => c.image.startsWith('http'))
-      if (!hasValidImages) {
-        console.error("❌ No valid images generated for any concepts")
-        throw new Error("Failed to generate any valid images")
-      }
-
-      console.log("✨ Final concepts with images:", JSON.stringify(conceptsWithImages, null, 2))
-      return NextResponse.json({ 
-        concepts: conceptsWithImages,
-        status: "success"
-      })
-
-    } catch (err) {
-      const openaiError = err as Error
-      console.error("❌ OpenAI API error:", {
-        message: openaiError.message,
-        stack: openaiError.stack,
-        name: openaiError.name
-      })
-      return NextResponse.json(
-        { 
-          error: "Failed to generate concepts",
-          concepts: FALLBACK_CONCEPTS,
-          details: openaiError.message
-        },
-        { status: 200 }
-      )
+    } catch (error) {
+      console.error('Failed to parse concepts:', error);
+      return NextResponse.json({ error: 'Failed to parse concepts' }, { status: 500 });
     }
 
-  } catch (err) {
-    const error = err as Error
-    console.error("❌ Request processing error:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    })
-    return NextResponse.json(
-      { 
-        error: "Failed to process request",
-        concepts: FALLBACK_CONCEPTS,
-        details: error.message
-      },
-      { status: 200 }
-    )
+    if (concepts.length === 0) {
+      return NextResponse.json({ error: 'No valid concepts generated' }, { status: 500 });
+    }
+
+    console.log('Processed concepts:', concepts);
+    return NextResponse.json({ concepts });
+
+  } catch (error) {
+    console.error('Error in route handler:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
