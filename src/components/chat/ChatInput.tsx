@@ -18,7 +18,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('ChatInput: Submitting form') // Debug log
+    console.log('ChatInput: Form submitted')
     handleSubmit(e)
   }
 
@@ -28,7 +28,10 @@ export function ChatInput({
         <input
           type="text"
           value={input}
-          onChange={handleInputChange}
+          onChange={(e) => {
+            console.log('ChatInput: Input changed')
+            handleInputChange(e)
+          }}
           placeholder="Describe your merch idea..."
           disabled={isLoading}
           className="w-full rounded-xl border px-4 py-3 shadow focus:outline-none focus:ring-2 focus:ring-black placeholder-gray-500"
@@ -38,7 +41,7 @@ export function ChatInput({
           type="submit"
           onClick={(e) => {
             e.preventDefault()
-            console.log('ChatInput: Button clicked') // Debug log
+            console.log('ChatInput: Button clicked')
             handleSubmit(e)
           }}
           disabled={isLoading || !input.trim()}

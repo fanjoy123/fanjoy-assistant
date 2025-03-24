@@ -28,49 +28,56 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Home: handleSubmit called') // Debug log
+    console.log('Home: handleSubmit called')
 
     if (!input.trim() || isLoading) {
-      console.log('Home: Submission blocked - empty input or loading') // Debug log
+      console.log('Home: Submission blocked - empty input or loading')
       return
     }
 
     setIsLoading(true)
     setError('')
-    setConcepts([]) // Clear previous concepts
+    setConcepts([])
 
     try {
-      console.log('Home: Submitting prompt:', { prompt: input.trim(), style: selectedStyle }) // Debug log
+      const requestBody = { prompt: input.trim(), style: selectedStyle }
+      console.log('Home: Submitting request:', requestBody)
       
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          prompt: input.trim(),
-          style: selectedStyle 
-        })
+        body: JSON.stringify(requestBody)
       })
 
       const data = await response.json()
-      console.log('Home: API Response:', data) // Debug log
+      console.log('Home: API Response:', data)
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to generate concepts')
       }
 
-      if (!data.concepts || !Array.isArray(data.concepts)) {
-        throw new Error('Invalid response format: missing concepts array')
+      if (!data.concepts || !Array.isArray(data.concepts) || data.concepts.length !== 4) {
+        console.error('Home: Invalid concepts format:', data)
+        throw new Error('Invalid response format: expected array of 4 concepts')
       }
 
-      console.log('Home: Setting concepts:', data.concepts) // Debug log
+      // Validate each concept
+      data.concepts.forEach((concept: Concept, index: number) => {
+        if (!concept.title || !concept.description || !concept.style) {
+          console.error('Home: Invalid concept at index', index, concept)
+          throw new Error(`Invalid concept format at position ${index + 1}`)
+        }
+      })
+
+      console.log('Home: Setting concepts:', data.concepts)
       setConcepts(data.concepts)
       setInput('')
     } catch (error) {
       console.error('Home: Error:', error)
       setError(error instanceof Error ? error.message : 'Failed to generate concepts')
-      setConcepts([]) // Clear concepts on error
+      setConcepts([])
     } finally {
       setIsLoading(false)
     }
