@@ -29,8 +29,12 @@ export function ConceptGrid({ concepts }: ConceptGridProps) {
     }))
   }
 
-  const handleImageError = (index: number) => {
-    console.warn("⚠️ Image failed to load for concept:", concepts[index])
+  const handleImageError = (index: number, concept: Concept) => {
+    console.warn("⚠️ Image failed to load:", {
+      concept,
+      imageUrl: concept.image,
+      isString: typeof concept.image === 'string'
+    })
     setImageErrors(prev => ({
       ...prev,
       [index]: true
@@ -59,6 +63,11 @@ export function ConceptGrid({ concepts }: ConceptGridProps) {
       return false
     }
 
+    if (typeof concept.image !== 'string') {
+      console.warn("⚠️ ConceptGrid: Image is not a string:", concept.image)
+      return false
+    }
+
     return true
   })
 
@@ -80,7 +89,7 @@ export function ConceptGrid({ concepts }: ConceptGridProps) {
         >
           <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
             <Image
-              src={imageErrors[idx] ? "/placeholder.png" : (concept.image || "/placeholder.png")}
+              src={imageErrors[idx] ? "/placeholder.png" : concept.image}
               alt={concept.title || "Merchandise concept"}
               fill
               className={`
@@ -88,7 +97,7 @@ export function ConceptGrid({ concepts }: ConceptGridProps) {
                 ${loadedImages[idx] ? 'blur-0' : 'blur-sm'}
               `}
               onLoad={() => handleImageLoad(idx)}
-              onError={() => handleImageError(idx)}
+              onError={() => handleImageError(idx, concept)}
               priority={idx < 2} // Load first two images immediately
             />
             {!loadedImages[idx] && (
@@ -108,6 +117,10 @@ export function ConceptGrid({ concepts }: ConceptGridProps) {
             <button 
               className="text-blue-500 text-sm hover:underline disabled:opacity-50 disabled:hover:no-underline"
               disabled={imageErrors[idx]}
+              onClick={() => {
+                // TODO: Implement regenerate/refine functionality
+                console.log("Regenerate/refine clicked for concept:", concept)
+              }}
             >
               {imageErrors[idx] ? 'Regenerate' : 'Refine'}
             </button>
