@@ -12,24 +12,20 @@ export function ChatInterface() {
       {
         id: 'welcome-message',
         role: 'assistant',
-        content: "Hi! I'm your AI design assistant. I'll help you create stunning merchandise designs. What kind of design would you like to create today?"
+        content: "Hi! I'm your design assistant. Let's create something amazing together! What kind of merch are you dreaming of?"
       }
     ]
   })
 
   return (
-    <div className="relative flex h-full flex-col justify-between">
-      <div className="relative flex-1 overflow-hidden bg-white">
-        <ChatMessages messages={messages} />
-      </div>
-      <div className="relative">
-        <ChatInput 
-          input={input}
-          isLoading={isLoading}
-          handleInputChange={handleInputChange}
-          handleSubmit={handleSubmit}
-        />
-      </div>
+    <div className="space-y-6">
+      <ChatMessages messages={messages} isLoading={isLoading} />
+      <ChatInput 
+        input={input}
+        isLoading={isLoading}
+        handleInputChange={handleInputChange}
+        handleSubmit={handleSubmit}
+      />
     </div>
   )
 } 
